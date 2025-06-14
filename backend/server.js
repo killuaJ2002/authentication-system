@@ -1,9 +1,13 @@
 import express from "express";
 import mongoose from "mongoose";
 import authenticationRoutes from "./routes/authenticationRoute.js";
+import cors from "cors";
 const PORT = process.env.PORT || 5000;
 const mongoUrl = process.env.MONGO_URL;
 const app = express();
+
+app.use(express.json());
+app.use(cors());
 
 const connectToMongo = async () => {
   try {
