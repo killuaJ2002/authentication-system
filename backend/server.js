@@ -1,7 +1,9 @@
 import express from "express";
 import mongoose from "mongoose";
+import session from "express-session";
 import authenticationRoutes from "./routes/authenticationRoute.js";
 import cors from "cors";
+import MongoStore from "connect-mongo";
 const PORT = process.env.PORT || 5000;
 const mongoUrl = process.env.MONGO_URL;
 const app = express();
@@ -21,6 +23,34 @@ const connectToMongo = async () => {
     process.exit(1); // Exit if DB connection fails
   }
 };
+
+// session configuration with MongoDB store
+app.use(
+  session({
+    secret: process.env.SECRET_KEY,
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: mongoUrl,
+      collectionName: "sessions", // Optional: specify collection name
+    }),
+    cookie: {
+      secure: false, // Set to true if using HTTPS
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      httpOnly: true, // Prevent XSS
+    },
+  })
+);
+
+// session debugging middleware
+app.use((req, res, next) => {
+  console.log("=== SESSION DEBUG ===");
+  console.log("Session ID:", req.sessionID);
+  console.log("Session data:", req.session);
+  console.log("Cookies:", req.headers.cookie);
+  console.log("====================");
+  next();
+});
 
 app.use("/", authenticationRoutes);
 
