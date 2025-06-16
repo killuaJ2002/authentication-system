@@ -1,0 +1,12 @@
+.signupContainer,
+.loginContainer {
+    display: none;
+}
+
+body.show-signup .signupContainer {
+    display: block;
+}
+
+body.show-login .loginContainer {
+    display: block;
+}
