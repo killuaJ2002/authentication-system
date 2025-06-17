@@ -16,9 +16,20 @@ const requireAuth = (req, res, next) => {
 
 // signup route
 router.post("/signup", async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ message: "email and password are required" });
+  const { email, password, confirmPassword } = req.body;
+
+  // Check if all required fields are present
+  if (!email || !password || !confirmPassword) {
+    return res
+      .status(400)
+      .json({ message: "email, password, and confirmPassword are required" });
+  }
+
+  // Check if passwords match
+  if (password !== confirmPassword) {
+    return res
+      .status(400)
+      .json({ message: "Password and confirm password do not match" });
   }
 
   try {
@@ -32,7 +43,22 @@ router.post("/signup", async (req, res) => {
       password: hashedPassword,
     });
     await newAuthUser.save();
-    res.status(201).json({ message: "New user created" });
+
+    // Create session after successful signup (auto-login)
+    req.session.userId = newAuthUser._id;
+    req.session.userEmail = newAuthUser.email;
+    req.session.isLoggedIn = true;
+
+    console.log("✅ New user created and logged in:", email);
+    console.log("📝 Session created:", req.sessionID);
+
+    res.status(201).json({
+      message: "New user created and logged in",
+      user: {
+        id: newAuthUser._id,
+        email: newAuthUser.email,
+      },
+    });
   } catch (error) {
     console.log("error:", error.message);
     res.status(500).json({ message: "Internal server error" });
@@ -110,7 +136,7 @@ router.get("/session-status", (req, res) => {
   } else {
     res.status(200).json({
       isLoggedIn: false,
-      sessionID: req.sessionID || null,
+      // Don't include sessionID here
     });
   }
 });
